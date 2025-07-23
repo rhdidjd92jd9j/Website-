@@ -1,0 +1,211 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Password Crack Time Estimator</title>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --accent: #00fff7;
+      --text: #e0e0e0;
+      --glow: 0 0 20px var(--accent);
+      --strong: #00ff00;
+      --medium: #ffaa00;
+      --weak: #ff0040;
+    }* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  perspective: 1000px;
+}
+
+.card {
+  background: var(--card);
+  padding: 3rem;
+  border-radius: 2rem;
+  box-shadow: 0 0 30px rgba(0, 255, 247, 0.2);
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease, box-shadow 0.3s ease;
+  max-width: 500px;
+  width: 100%;
+}
+
+.card:hover {
+  transform: rotateY(5deg) rotateX(5deg);
+  box-shadow: 0 0 40px rgba(0, 255, 247, 0.5);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--accent);
+  text-shadow: var(--glow);
+}
+
+input {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  margin-bottom: 1.2rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: #111;
+  color: var(--accent);
+  box-shadow: inset 0 0 10px rgba(0, 255, 247, 0.3);
+}
+
+.strength-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background: #222;
+  margin-bottom: 1.2rem;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0;
+  transition: width 0.5s ease;
+}
+
+.result {
+  font-size: 1.1rem;
+  color: #fff;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.highlight {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+footer {
+  margin-top: 2rem;
+  font-size: 0.8rem;
+  opacity: 0.5;
+  text-align: center;
+}
+
+.toggle {
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+.toggle button {
+  background: none;
+  border: 2px solid var(--accent);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  color: var(--accent);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.toggle button:hover {
+  background: var(--accent);
+  color: #000;
+}
+
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔐 Crack Time Estimator</h1>
+    <div class="toggle">
+      <button onclick="toggleTheme()">Toggle Theme</button>
+    </div>
+    <input type="text" id="password" placeholder="Enter your password..." />
+    <div class="strength-bar">
+      <div id="strength-fill" class="strength-fill"></div>
+    </div>
+    <div class="result" id="output">Type your password to see results</div>
+    <footer>Built with ❤️ | Hosted on GitHub Pages</footer>
+  </div>  <script>
+    const input = document.getElementById("password");
+    const output = document.getElementById("output");
+    const strengthFill = document.getElementById("strength-fill");
+
+    function estimateTime(password) {
+      let charsetSize = 0;
+      if (/[a-z]/.test(password)) charsetSize += 26;
+      if (/[A-Z]/.test(password)) charsetSize += 26;
+      if (/[0-9]/.test(password)) charsetSize += 10;
+      if (/[^a-zA-Z0-9]/.test(password)) charsetSize += 32;
+
+      const length = password.length;
+      if (charsetSize === 0 || length === 0) return null;
+
+      const totalComb = BigInt(charsetSize) ** BigInt(length);
+      const guessesPerSec = 1_000_000_000n;
+      const seconds = totalComb / guessesPerSec;
+
+      return seconds;
+    }
+
+    function formatDuration(seconds) {
+      if (seconds < 60n) return `${seconds} seconds`;
+      const minutes = seconds / 60n;
+      if (minutes < 60n) return `${minutes} minutes`;
+      const hours = minutes / 60n;
+      if (hours < 24n) return `${hours} hours`;
+      const days = hours / 24n;
+      if (days < 365n) return `${days} days`;
+      const years = days / 365n;
+      if (years > 1_000_000_000n) return "billions of years 🚀 (very strong)";
+      return `${years} years`;
+    }
+
+    function getStrength(seconds) {
+      if (!seconds) return { level: 0, color: "" };
+      if (seconds < 100000n) return { level: 25, color: "var(--weak)" };
+      if (seconds < 100000000n) return { level: 50, color: "var(--medium)" };
+      if (seconds < 1000000000000n) return { level: 75, color: "var(--accent)" };
+      return { level: 100, color: "var(--strong)" };
+    }
+
+    input.addEventListener("input", () => {
+      const password = input.value.trim();
+      const seconds = estimateTime(password);
+
+      if (!seconds) {
+        output.innerHTML = "Type your password to see results";
+        strengthFill.style.width = "0";
+        return;
+      }
+
+      output.innerHTML = `Estimated time to crack: <span class="highlight">${formatDuration(seconds)}</span>`;
+
+      const strength = getStrength(seconds);
+      strengthFill.style.width = `${strength.level}%`;
+      strengthFill.style.background = strength.color;
+    });
+
+    function toggleTheme() {
+      const root = document.documentElement;
+      if (root.style.getPropertyValue('--bg') === '#0f0f1a') {
+        root.style.setProperty('--bg', '#f4f4f4');
+        root.style.setProperty('--card', '#ffffff');
+        root.style.setProperty('--text', '#111');
+      } else {
+        root.style.setProperty('--bg', '#0f0f1a');
+        root.style.setProperty('--card', '#1a1a2e');
+        root.style.setProperty('--text', '#e0e0e0');
+      }
+    }
+  </script></body>
+</html>

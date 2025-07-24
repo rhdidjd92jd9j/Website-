@@ -1,211 +1,667 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Password Crack Time Estimator</title>
-  <style>
-    :root {
-      --bg: #0f0f1a;
-      --card: #1a1a2e;
-      --accent: #00fff7;
-      --text: #e0e0e0;
-      --glow: 0 0 20px var(--accent);
-      --strong: #00ff00;
-      --medium: #ffaa00;
-      --weak: #ff0040;
-    }* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  scroll-behavior: smooth;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Strength Analyzer | Brute Force Time Estimator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dark-bg: #0f0f15;
+            --darker-bg: #090911;
+            --card-bg: #1a1a25;
+            --card-border: rgba(100, 100, 255, 0.1);
+            --primary: #6c63ff;
+            --primary-light: #837dff;
+            --primary-dark: #564fe0;
+            --secondary: #ff6584;
+            --accent: #42e6ff;
+            --text: #e6e6ff;
+            --text-secondary: #a0a0c0;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 2rem;
-  perspective: 1000px;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-.card {
-  background: var(--card);
-  padding: 3rem;
-  border-radius: 2rem;
-  box-shadow: 0 0 30px rgba(0, 255, 247, 0.2);
-  transform-style: preserve-3d;
-  transition: transform 0.4s ease, box-shadow 0.3s ease;
-  max-width: 500px;
-  width: 100%;
-}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(108, 99, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 101, 132, 0.05) 0%, transparent 20%),
+                linear-gradient(to bottom, var(--darker-bg), var(--dark-bg));
+            background-attachment: fixed;
+        }
 
-.card:hover {
-  transform: rotateY(5deg) rotateX(5deg);
-  box-shadow: 0 0 40px rgba(0, 255, 247, 0.5);
-}
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
 
-h1 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: var(--accent);
-  text-shadow: var(--glow);
-}
+        /* Header & Navigation */
+        header {
+            padding: 20px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            background: rgba(15, 15, 21, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(100, 100, 255, 0.1);
+        }
 
-input {
-  width: 100%;
-  padding: 1rem;
-  font-size: 1rem;
-  margin-bottom: 1.2rem;
-  border: none;
-  border-radius: 0.75rem;
-  background: #111;
-  color: var(--accent);
-  box-shadow: inset 0 0 10px rgba(0, 255, 247, 0.3);
-}
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-.strength-bar {
-  width: 100%;
-  height: 10px;
-  border-radius: 5px;
-  background: #222;
-  margin-bottom: 1.2rem;
-  overflow: hidden;
-}
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.8rem;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(108, 99, 255, 0.3);
+        }
 
-.strength-fill {
-  height: 100%;
-  width: 0;
-  transition: width 0.5s ease;
-}
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
 
-.result {
-  font-size: 1.1rem;
-  color: #fff;
-  text-align: center;
-  line-height: 1.6;
-}
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            padding: 5px 0;
+            transition: var(--transition);
+        }
 
-.highlight {
-  color: var(--accent);
-  font-weight: bold;
-}
+        .nav-links a:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: var(--transition);
+        }
 
-footer {
-  margin-top: 2rem;
-  font-size: 0.8rem;
-  opacity: 0.5;
-  text-align: center;
-}
+        .nav-links a:hover {
+            color: var(--primary-light);
+        }
 
-.toggle {
-  text-align: center;
-  margin-bottom: 1.2rem;
-}
+        .nav-links a:hover:after {
+            width: 100%;
+        }
 
-.toggle button {
-  background: none;
-  border: 2px solid var(--accent);
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  color: var(--accent);
-  cursor: pointer;
-  transition: 0.3s;
-}
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-top: 80px;
+            position: relative;
+        }
 
-.toggle button:hover {
-  background: var(--accent);
-  color: #000;
-}
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(108, 99, 255, 0.4);
+            letter-spacing: 1px;
+        }
 
-  </style>
+        .hero p {
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto 40px;
+            color: var(--text-secondary);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            opacity: 0.3;
+        }
+
+        .hero-bg .cube {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 2px solid rgba(108, 99, 255, 0.3);
+            transform-style: preserve-3d;
+            animation: rotate 20s infinite linear;
+        }
+
+        .cube:nth-child(1) {
+            top: 20%;
+            left: 10%;
+            animation-duration: 25s;
+        }
+
+        .cube:nth-child(2) {
+            top: 60%;
+            left: 80%;
+            animation-duration: 30s;
+            animation-direction: reverse;
+        }
+
+        .cube:nth-child(3) {
+            top: 40%;
+            left: 50%;
+            animation-duration: 35s;
+        }
+
+        .cube:nth-child(4) {
+            top: 80%;
+            left: 30%;
+            animation-duration: 40s;
+            animation-direction: reverse;
+        }
+
+        .cube .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(108, 99, 255, 0.2);
+        }
+
+        .cube .face:nth-child(1) { transform: translateZ(50px); }
+        .cube .face:nth-child(2) { transform: rotateY(180deg) translateZ(50px); }
+        .cube .face:nth-child(3) { transform: rotateY(90deg) translateZ(50px); }
+        .cube .face:nth-child(4) { transform: rotateY(-90deg) translateZ(50px); }
+        .cube .face:nth-child(5) { transform: rotateX(90deg) translateZ(50px); }
+        .cube .face:nth-child(6) { transform: rotateX(-90deg) translateZ(50px); }
+
+        /* Password Analyzer Section */
+        .analyzer-section {
+            padding: 120px 0;
+            position: relative;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary-light);
+            text-shadow: 0 0 15px rgba(108, 99, 255, 0.3);
+        }
+
+        .analyzer-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+            transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+            transition: var(--transition);
+        }
+
+        .analyzer-card:hover {
+            transform: perspective(1000px) rotateY(2deg) rotateX(1deg);
+            box-shadow: 0 20px 45px rgba(108, 99, 255, 0.2);
+        }
+
+        .analyzer-card:before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--primary), var(--accent), var(--secondary));
+            z-index: -1;
+            border-radius: 22px;
+        }
+
+        .analyzer-card:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--card-bg);
+            border-radius: 20px;
+            z-index: -1;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(108, 99, 255, 0.3);
+            background: rgba(15, 15, 21, 0.5);
+            color: var(--text);
+            font-size: 1.1rem;
+            transition: var(--transition);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(108, 99, 255, 0.3);
+        }
+
+        .password-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+
+        .toggle-password:hover {
+            color: var(--primary-light);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 10px 20px rgba(108, 99, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            width: 100%;
+            transform: translateY(0);
+        }
+
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(-2px);
+        }
+
+        .strength-meter {
+            height: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 25px 0;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) inset;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 10px;
+            transition: var(--transition);
+            background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+        }
+
+        .strength-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .strength-labels span {
+            flex: 1;
+            text-align: center;
+        }
+
+        .strength-labels span.active {
+            color: var(--text);
+            font-weight: bold;
+        }
+
+        .result-container {
+            background: rgba(15, 15, 21, 0.5);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            border: 1px solid rgba(100, 100, 255, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .result-container.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .result-title {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary-light);
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .result-card {
+            background: rgba(26, 26, 37, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(100, 100, 255, 0.1);
+            transition: var(--transition);
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(108, 99, 255, 0.3);
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .result-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .time-estimate {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 15px;
+            background: linear-gradient(45deg, rgba(26, 26, 37, 0.7), rgba(26, 26, 37, 0.9));
+            border: 1px solid var(--primary);
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary-light);
+            text-shadow: 0 0 10px rgba(108, 99, 255, 0.3);
+        }
+
+        .tips-section {
+            padding: 100px 0;
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .tip-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tip-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(108, 99, 255, 0.2);
+            border-color: rgba(108, 99, 255, 0.3);
+        }
+
+        .tip-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+        }
+
+        .tip-icon {
+            font-size: 2.5rem;
+            color: var(--primary-light);
+            margin-bottom: 20px;
+        }
+
+        .tip-title {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: var(--primary-light);
+        }
+
+        footer {
+            background: var(--darker-bg);
+            padding: 40px 0;
+            text-align: center;
+            border-top: 1px solid rgba(100, 100, 255, 0.1);
+        }
+
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .copyright {
+            color: var(--text-secondary);
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        /* Animations */
+        @keyframes rotate {
+            0% { transform: rotateX(0) rotateY(0) rotateZ(0); }
+            100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .analyzer-card {
+                padding: 25px;
+            }
+            
+            .result-value {
+                font-size: 1.5rem;
+            }
+            
+            .time-estimate {
+                font-size: 1.4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 2.3rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <h1>🔐 Crack Time Estimator</h1>
-    <div class="toggle">
-      <button onclick="toggleTheme()">Toggle Theme</button>
-    </div>
-    <input type="text" id="password" placeholder="Enter your password..." />
-    <div class="strength-bar">
-      <div id="strength-fill" class="strength-fill"></div>
-    </div>
-    <div class="result" id="output">Type your password to see results</div>
-    <footer>Built with ❤️ | Hosted on GitHub Pages</footer>
-  </div>  <script>
-    const input = document.getElementById("password");
-    const output = document.getElementById("output");
-    const strengthFill = document.getElementById("strength-fill");
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">CryptoLock</div>
+                <div class="nav-links">
+                    <a href="#analyzer">Analyzer</a>
+                    <a href="#tips">Tips</a>
+                    <a href="#">About</a>
+                    <a href="#">Contact</a>
+                </div>
+            </nav>
+        </div>
+    </header>
 
-    function estimateTime(password) {
-      let charsetSize = 0;
-      if (/[a-z]/.test(password)) charsetSize += 26;
-      if (/[A-Z]/.test(password)) charsetSize += 26;
-      if (/[0-9]/.test(password)) charsetSize += 10;
-      if (/[^a-zA-Z0-9]/.test(password)) charsetSize += 32;
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg">
+            <div class="cube">
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+            </div>
+            <div class="cube">
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+            </div>
+            <div class="cube">
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+            </div>
+            <div class="cube">
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+            </div>
+        </div>
+        <div class="hero-content">
+            <h1>Password Strength Analyzer</h1>
+            <p>Discover how secure your passwords really are. Our advanced algorithm estimates the time it would take for a hacker to crack your password using brute force methods.</p>
+        </div>
+    </section>
 
-      const length = password.length;
-      if (charsetSize === 0 || length === 0) return null;
-
-      const totalComb = BigInt(charsetSize) ** BigInt(length);
-      const guessesPerSec = 1_000_000_000n;
-      const seconds = totalComb / guessesPerSec;
-
-      return seconds;
-    }
-
-    function formatDuration(seconds) {
-      if (seconds < 60n) return `${seconds} seconds`;
-      const minutes = seconds / 60n;
-      if (minutes < 60n) return `${minutes} minutes`;
-      const hours = minutes / 60n;
-      if (hours < 24n) return `${hours} hours`;
-      const days = hours / 24n;
-      if (days < 365n) return `${days} days`;
-      const years = days / 365n;
-      if (years > 1_000_000_000n) return "billions of years 🚀 (very strong)";
-      return `${years} years`;
-    }
-
-    function getStrength(seconds) {
-      if (!seconds) return { level: 0, color: "" };
-      if (seconds < 100000n) return { level: 25, color: "var(--weak)" };
-      if (seconds < 100000000n) return { level: 50, color: "var(--medium)" };
-      if (seconds < 1000000000000n) return { level: 75, color: "var(--accent)" };
-      return { level: 100, color: "var(--strong)" };
-    }
-
-    input.addEventListener("input", () => {
-      const password = input.value.trim();
-      const seconds = estimateTime(password);
-
-      if (!seconds) {
-        output.innerHTML = "Type your password to see results";
-        strengthFill.style.width = "0";
-        return;
-      }
-
-      output.innerHTML = `Estimated time to crack: <span class="highlight">${formatDuration(seconds)}</span>`;
-
-      const strength = getStrength(seconds);
-      strengthFill.style.width = `${strength.level}%`;
-      strengthFill.style.background = strength.color;
-    });
-
-    function toggleTheme() {
-      const root = document.documentElement;
-      if (root.style.getPropertyValue('--bg') === '#0f0f1a') {
-        root.style.setProperty('--bg', '#f4f4f4');
-        root.style.setProperty('--card', '#ffffff');
-        root.style.setProperty('--text', '#111');
-      } else {
-        root.style.setProperty('--bg', '#0f0f1a');
-        root.style.setProperty('--card', '#1a1a2e');
-        root.style.setProperty('--text', '#e0e0e0');
-      }
-    }
-  </script></body>
-</html>
+    <!-- Password Analyzer Section -->
+    <section id="analyzer" class="analyzer-section">
+        <div class="container">
+            <h2 class="section-title">Test Your Password</h2>
+            <div class="analyzer-card">
+                <div class="input-group">
+                    <input type="password" id="passwordInput" class="password-input" placeholder="Enter your password...">
+                    <button class="toggle-password" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                
+                <div class="strength-meter">
+                    <div class="strength-fill" id="strengthFill"></div>
+                </div>
+                
+                <div class="strength-labels">
+                    <span id="labelWeak">Weak</span>
+                    <span id="labelMedium">Medium</span>
+                    <span id="labelStrong">Strong</span>
+                    <span id="labelVeryStrong">Very Strong</span>
+                </div>
+                
+                <button id="analyzeBtn" class="btn">
+                    <i class="fas fa-shield-alt"></i> Test Password Security
+                </button>
+                
+                <div class="result-container" id="resultContainer">
+                    <h3 class="result-title">Security Analysis</h3>
+                    <div class="result-grid">
+                        <div class="result-card">
+                            <div class="result-label">Password Strength</div>
+                            <div class="resul
